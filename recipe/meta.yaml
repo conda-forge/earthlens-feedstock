@@ -1,118 +1,46 @@
 {% set python_min = "3.11" %}
 {% set name = "earthlens" %}
-{% set version = "0.5.0" %}
+{% set version = "0.4.0" %}
 
 package:
-  name: {{ name|lower }}-split
+  name: {{ name|lower }}
   version: {{ version }}
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: f501b534c67b21b907a146c95b58af99fb0d417843c0a2bc6a09e3acb46219fd
+  sha256: 19b7f5a9ab751d039873b61921a6e46ad548d81408f625f8fa0fe8fc9347a08a
 
 build:
   number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
 
-outputs:
-  - name: earthlens
-    build:
-      noarch: python
-      script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-    requirements:
-      host:
-        - python {{ python_min }}
-        - pip
-        - setuptools >=80
-        - wheel
-      run:
-        - python >={{ python_min }}
-        - pyramids >=0.19.0
-        - joblib >=1.5.0
-        - loguru >=0.7.3
-        - numpy >=2.0.0
-        - pandas >=2.0.0
-        - pyyaml >=6.0.2
-        - pydantic >=2
-        - requests >=2.28.1
-        - tqdm >=4.66.0
-    test:
-      requires:
-        - python {{ python_min }}
-      imports:
-        - earthlens
-        - earthlens.aggregate
-        - earthlens.base
-        - earthlens.chc
+requirements:
+  host:
+    - python {{ python_min }}
+    - pip
+    - setuptools >=80
+    - wheel
+  run:
+    - python >={{ python_min }}
+    - pyramids >=0.17.0
+    - joblib >=1.2.0
+    - loguru >=0.7.2
+    - numpy >=2.1.3
+    - pandas >=2.2.3
+    - pyyaml >=6.0.2
+    - pydantic >=2
+    - requests >=2.28.1
+    - tqdm >=4.66.0
 
-  - name: earthlens-s3
-    build:
-      noarch: python
-    requirements:
-      host:
-        - python {{ python_min }}
-      run:
-        - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
-        - boto3 >=1.43.0
-    test:
-      requires:
-        - python {{ python_min }}
-      imports:
-        - earthlens.s3
-
-  - name: earthlens-ecmwf
-    build:
-      noarch: python
-    requirements:
-      host:
-        - python {{ python_min }}
-      run:
-        - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
-        - cdsapi >=0.7.7
-    test:
-      requires:
-        - python {{ python_min }}
-      imports:
-        - earthlens.ecmwf
-
-  - name: earthlens-gee
-    build:
-      noarch: python
-    requirements:
-      host:
-        - python {{ python_min }}
-      run:
-        - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
-        - earthengine-api >=1.7.26
-        - rtree >=1.0.0
-    test:
-      requires:
-        - python {{ python_min }}
-      imports:
-        - earthlens.gee
-
-  - name: earthlens-all
-    build:
-      noarch: python
-    requirements:
-      host:
-        - python {{ python_min }}
-      run:
-        - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
-        - {{ pin_subpackage('earthlens-s3', exact=True) }}
-        - {{ pin_subpackage('earthlens-ecmwf', exact=True) }}
-        - {{ pin_subpackage('earthlens-gee', exact=True) }}
-    test:
-      requires:
-        - python {{ python_min }}
-      imports:
-        - earthlens
-        - earthlens.s3
-        - earthlens.ecmwf
-        - earthlens.gee
+test:
+  requires:
+    - python {{ python_min }}
+  imports:
+    - earthlens
+    - earthlens.aggregate
+    - earthlens.base
+    - earthlens.chirps
 
 about:
   home: https://github.com/serapeum-org/earthlens
@@ -122,21 +50,17 @@ about:
   summary: Remote sensing package for downloading satellite and climate data
   description: |
     earthlens is a Python package for downloading satellite and climate
-    data from multiple sources, including the Climate Hazards Center
-    (CHIRPS / CHIRP / CHIRTS / WBGT / SPI / SPEI / CHC_CMIP6, via FTP),
-    ERA5 on AWS S3, the ECMWF Climate Data Store via cdsapi, and Google
-    Earth Engine. It provides a unified `EarthLens` facade that lazily
-    loads each backend so the optional SDK for a backend you don't use
-    never has to be installed.
+    data from multiple sources, including CHIRPS rainfall (FTP), ERA5 on
+    AWS S3, the ECMWF Climate Data Store via cdsapi, and Google Earth
+    Engine. It provides a unified `EarthLens` facade that lazily loads
+    each backend so the optional SDK for a backend you don't use never
+    has to be installed.
 
-    The core `earthlens` package ships only the CHC (FTP) backend's
-    requirements. The optional backends are packaged as separate
-    metapackages that depend on `earthlens` plus the relevant SDK:
+    Optional backends can be enabled by additionally installing:
 
-      * `earthlens-s3` — boto3 (ERA5-on-S3 backend)
-      * `earthlens-ecmwf` — cdsapi (ECMWF/CDS backend)
-      * `earthlens-gee` — earthengine-api + rtree (Google Earth Engine)
-      * `earthlens-all` — pulls in every optional backend
+      * boto3 (for the ERA5-on-S3 backend)
+      * cdsapi (for the ECMWF/CDS backend)
+      * earthengine-api (for the Google Earth Engine backend)
   dev_url: https://github.com/serapeum-org/earthlens
   doc_url: https://serapeum-org.github.io/earthlens/
   doc_source_url: https://github.com/serapeum-org/earthlens/main/README.md
