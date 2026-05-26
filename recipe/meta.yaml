@@ -12,6 +12,16 @@ source:
 
 build:
   number: 0
+  noarch: python
+
+requirements:
+  host:
+    - python {{ python_min }}
+    - pip
+    - setuptools >=80
+    - wheel
+  run:
+    - python >={{ python_min }}
 
 outputs:
   - name: earthlens
