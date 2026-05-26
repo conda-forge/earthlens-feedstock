@@ -1,6 +1,6 @@
 {% set python_min = "3.11" %}
 {% set name = "earthlens" %}
-{% set version = "0.4.0" %}
+{% set version = "0.6.0" %}
 
 package:
   name: {{ name|lower }}
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 19b7f5a9ab751d039873b61921a6e46ad548d81408f625f8fa0fe8fc9347a08a
+  sha256: 3f2ba8bb235cf8e0e7d4810aedc895b3f46a88dc4230043fb4f98aa2767e3b28
 
 build:
   number: 0
