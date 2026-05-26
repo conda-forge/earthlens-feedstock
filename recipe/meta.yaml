@@ -17,7 +17,7 @@ outputs:
   - name: earthlens
     build:
       noarch: python
-      script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+      script: build.sh
     requirements:
       host:
         - python {{ python_min }}
