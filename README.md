@@ -1,5 +1,5 @@
-About earthlens-feedstock
-=========================
+About earthlens-split-feedstock
+===============================
 
 Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/earthlens-feedstock/blob/main/LICENSE.txt)
 
@@ -14,17 +14,21 @@ Development: https://github.com/serapeum-org/earthlens
 Documentation: https://serapeum-org.github.io/earthlens/
 
 earthlens is a Python package for downloading satellite and climate
-data from multiple sources, including CHIRPS rainfall (FTP), ERA5 on
-AWS S3, the ECMWF Climate Data Store via cdsapi, and Google Earth
-Engine. It provides a unified `EarthLens` facade that lazily loads
-each backend so the optional SDK for a backend you don't use never
-has to be installed.
+data from multiple sources, including the Climate Hazards Center
+(CHIRPS / CHIRP / CHIRTS / WBGT / SPI / SPEI / CHC_CMIP6, via FTP),
+ERA5 on AWS S3, the ECMWF Climate Data Store via cdsapi, and Google
+Earth Engine. It provides a unified `EarthLens` facade that lazily
+loads each backend so the optional SDK for a backend you don't use
+never has to be installed.
 
-Optional backends can be enabled by additionally installing:
+The core `earthlens` package ships only the CHC (FTP) backend's
+requirements. The optional backends are packaged as separate
+metapackages that depend on `earthlens` plus the relevant SDK:
 
-  * boto3 (for the ERA5-on-S3 backend)
-  * cdsapi (for the ECMWF/CDS backend)
-  * earthengine-api (for the Google Earth Engine backend)
+  * `earthlens-s3` — boto3 (ERA5-on-S3 backend)
+  * `earthlens-ecmwf` — cdsapi (ECMWF/CDS backend)
+  * `earthlens-gee` — earthengine-api + rtree (Google Earth Engine)
+  * `earthlens-all` — pulls in every optional backend
 
 
 Current build status
@@ -47,27 +51,31 @@ Current release info
 | Name | Downloads | Version | Platforms |
 | --- | --- | --- | --- |
 | [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens-green.svg)](https://anaconda.org/conda-forge/earthlens) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens.svg)](https://anaconda.org/conda-forge/earthlens) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens.svg)](https://anaconda.org/conda-forge/earthlens) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens.svg)](https://anaconda.org/conda-forge/earthlens) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--all-green.svg)](https://anaconda.org/conda-forge/earthlens-all) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-all.svg)](https://anaconda.org/conda-forge/earthlens-all) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-all.svg)](https://anaconda.org/conda-forge/earthlens-all) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-all.svg)](https://anaconda.org/conda-forge/earthlens-all) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--ecmwf-green.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-ecmwf.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-ecmwf.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-ecmwf.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--gee-green.svg)](https://anaconda.org/conda-forge/earthlens-gee) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-gee.svg)](https://anaconda.org/conda-forge/earthlens-gee) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-gee.svg)](https://anaconda.org/conda-forge/earthlens-gee) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-gee.svg)](https://anaconda.org/conda-forge/earthlens-gee) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--s3-green.svg)](https://anaconda.org/conda-forge/earthlens-s3) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-s3.svg)](https://anaconda.org/conda-forge/earthlens-s3) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-s3.svg)](https://anaconda.org/conda-forge/earthlens-s3) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-s3.svg)](https://anaconda.org/conda-forge/earthlens-s3) |
 
-Installing earthlens
-====================
+Installing earthlens-split
+==========================
 
-Installing `earthlens` from the `conda-forge` channel can be achieved by adding `conda-forge` to your channels with:
+Installing `earthlens-split` from the `conda-forge` channel can be achieved by adding `conda-forge` to your channels with:
 
 ```
 conda config --add channels conda-forge
 conda config --set channel_priority strict
 ```
 
-Once the `conda-forge` channel has been enabled, `earthlens` can be installed with `conda`:
+Once the `conda-forge` channel has been enabled, `earthlens, earthlens-all, earthlens-ecmwf, earthlens-gee, earthlens-s3` can be installed with `conda`:
 
 ```
-conda install earthlens
+conda install earthlens earthlens-all earthlens-ecmwf earthlens-gee earthlens-s3
 ```
 
 or with `mamba`:
 
 ```
-mamba install earthlens
+mamba install earthlens earthlens-all earthlens-ecmwf earthlens-gee earthlens-s3
 ```
 
 It is possible to list all of the versions of `earthlens` available on your platform with `conda`:
@@ -137,17 +145,17 @@ Terminology
                   produce the finished article (built conda distributions)
 
 
-Updating earthlens-feedstock
-============================
+Updating earthlens-split-feedstock
+==================================
 
-If you would like to improve the earthlens recipe or build a new
+If you would like to improve the earthlens-split recipe or build a new
 package version, please fork this repository and submit a PR. Upon submission,
 your changes will be run on the appropriate platforms to give the reviewer an
 opportunity to confirm that the changes result in a successful build. Once
 merged, the recipe will be re-built and uploaded automatically to the
 `conda-forge` channel, whereupon the built conda packages will be available for
 everybody to install and use from the `conda-forge` channel.
-Note that all branches in the conda-forge/earthlens-feedstock are
+Note that all branches in the conda-forge/earthlens-split-feedstock are
 immediately built and any created packages are uploaded, so PRs should be based
 on branches in forks, and branches in the main repository should only be used to
 build distinct package versions.

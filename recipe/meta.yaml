@@ -1,6 +1,6 @@
 {% set python_min = "3.11" %}
 {% set name = "earthlens" %}
-{% set version = "0.6.0" %}
+{% set version = "0.7.0" %}
 
 package:
   name: {{ name|lower }}-split
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 3f2ba8bb235cf8e0e7d4810aedc895b3f46a88dc4230043fb4f98aa2767e3b28
+  sha256: 38da5cd8af0c735813163debe838ff80e2fabec7ea92ce99b6b9dc1e2ff45b80
 
 build:
   number: 0
@@ -36,7 +36,16 @@ outputs:
         - wheel
       run:
         - python >={{ python_min }}
-        - pyramids >=0.23.0
+        - pyramids >=0.31.0
+        # GDAL + its format drivers are bundled inside the pyramids PyPI wheel
+        # (osgeo vendored in pyramids/_vendor), so they are absent from
+        # earthlens' pyproject.toml. The conda-forge `pyramids` package does NOT
+        # vendor GDAL, so earthlens must pull the GDAL stack explicitly here.
+        - gdal >=3.10.0,<4
+        - libgdal-netcdf >=3.10.0,<4
+        - libgdal-hdf4 >=3.10.0,<4
+        - libgdal-grib >=3.10.0,<4
+        - pyogrio >=0.7
         - geopandas >=1.0.0
         - joblib >=1.5.0
         - loguru >=0.7.3
@@ -127,6 +136,41 @@ outputs:
         - {{ pin_subpackage('earthlens-s3', exact=True) }}
         - {{ pin_subpackage('earthlens-ecmwf', exact=True) }}
         - {{ pin_subpackage('earthlens-gee', exact=True) }}
+        # Remaining optional backends from the pyproject.toml `[all]` extra. Each
+        # group mirrors one optional-dependency set. `radar` shares the s3 SDK
+        # (boto3/botocore), already pulled in via earthlens-s3 above, and the
+        # `ghsl`/`firms`/`gdacs`/`openaq` backends need no extra SDK (HTTPS +
+        # core deps), so they are already covered by the base earthlens package.
+        # cmems
+        - copernicusmarine >=2.0.0,<3
+        # fdsn
+        - obspy >=1.5.0
+        # hdx
+        - hdx-python-api >=6,<7
+        # eumetsat
+        - eumdac >=3.1
+        # nwp
+        - herbie-data >=2026.3
+        - ecmwf-opendata >=0.3
+        # sentinel-hub
+        - sentinelhub >=3.11.5
+        # tropycal (cartopy is required: tropycal.tracks imports cartopy)
+        - tropycal >=1.4
+        - cartopy >=0.22
+        # overture
+        - overturemaps >=1.0.0
+        - duckdb >=1.0.0
+        # usgs-water
+        - dataretrieval >=1.1.4
+        #
+        # Backends from `[all]` deliberately NOT bundled here because they cannot
+        # be satisfied on conda-forge today:
+        #   * earthdata — earthaccess requires python >=3.12, which would raise
+        #                 this noarch bundle's floor above python_min (3.11).
+        #   * openeo    — pyproject pins openeo >=0.47,<0.48; conda-forge jumps
+        #                 from 0.46 to 0.49 (no 0.47.x), so the range is unsolvable.
+        #   * stac      — requires stac-asset, not yet on conda-forge.
+        #   * worldpop  — worldpoppy is not on conda-forge.
     test:
       requires:
         - python {{ python_min }}
@@ -135,7 +179,16 @@ outputs:
         - earthlens.s3
         - earthlens.ecmwf
         - earthlens.gee
-
+        - earthlens.cmems
+        - earthlens.fdsn
+        - earthlens.hdx
+        - earthlens.eumetsat
+        - earthlens.nwp
+        - earthlens.radar
+        - earthlens.sentinel_hub
+        - earthlens.tropycal
+        - earthlens.overture
+        - earthlens.usgs_water
 about:
   home: https://github.com/serapeum-org/earthlens
   license: GPL-3.0-or-later
