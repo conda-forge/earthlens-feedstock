@@ -36,7 +36,16 @@ outputs:
         - wheel
       run:
         - python >={{ python_min }}
-        - pyramids >=0.23.0
+        - pyramids >=0.31.0
+        # GDAL + its format drivers are bundled inside the pyramids PyPI wheel
+        # (osgeo vendored in pyramids/_vendor), so they are absent from
+        # earthlens' pyproject.toml. The conda-forge `pyramids` package does NOT
+        # vendor GDAL, so earthlens must pull the GDAL stack explicitly here.
+        - gdal >=3.10.0,<4
+        - libgdal-netcdf >=3.10.0,<4
+        - libgdal-hdf4 >=3.10.0,<4
+        - libgdal-grib >=3.10.0,<4
+        - pyogrio >=0.7
         - geopandas >=1.0.0
         - joblib >=1.5.0
         - loguru >=0.7.3
