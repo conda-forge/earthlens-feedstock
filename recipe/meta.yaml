@@ -1,6 +1,6 @@
 {% set python_min = "3.11" %}
 {% set name = "earthlens" %}
-{% set version = "0.7.0" %}
+{% set version = "0.8.0" %}
 
 package:
   name: {{ name|lower }}-split
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 38da5cd8af0c735813163debe838ff80e2fabec7ea92ce99b6b9dc1e2ff45b80
+  sha256: 39e245dbf42493534ebf62c1663405f42175ba67896ad4e9a0c191bae09c3ebf
 
 build:
   number: 0
@@ -36,7 +36,7 @@ outputs:
         - wheel
       run:
         - python >={{ python_min }}
-        - pyramids >=0.31.0
+        - pyramids >=0.35.0
         # GDAL + its format drivers are bundled inside the pyramids PyPI wheel
         # (osgeo vendored in pyramids/_vendor), so they are absent from
         # earthlens' pyproject.toml. The conda-forge `pyramids` package does NOT
@@ -57,6 +57,11 @@ outputs:
         - requests >=2.28.1
         - shapely >=2.0.0
         - tqdm >=4.66.0
+        # typer + rich are core: the `earthlens` console script (project.scripts)
+        # imports earthlens.cli at module load, so pyproject.toml lists them in
+        # the core dependencies (not behind an extra).
+        - typer >=0.12
+        - rich >=13
       run_constrained:
         - boto3 >=1.43.0
         - cdsapi >=0.7.7
@@ -70,6 +75,9 @@ outputs:
         - earthlens.aggregate
         - earthlens.base
         - earthlens.chc
+      commands:
+        # the earthlens CLI shipped in 0.8.0; verifies typer/rich resolve too
+        - earthlens --help
 
   - name: earthlens-s3
     build:
@@ -162,6 +170,9 @@ outputs:
         - duckdb >=1.0.0
         # usgs-water
         - dataretrieval >=1.1.4
+        # nwm (NOAA National Water Model): earthlens[s3] (boto3/botocore already
+        # via earthlens-s3 above) + pyramids[parquet] (pyarrow) for to_parquet.
+        - pyarrow >=10.0.0
         #
         # Backends from `[all]` deliberately NOT bundled here because they cannot
         # be satisfied on conda-forge today:
@@ -189,6 +200,7 @@ outputs:
         - earthlens.tropycal
         - earthlens.overture
         - earthlens.usgs_water
+        - earthlens.nwm
 about:
   home: https://github.com/serapeum-org/earthlens
   license: GPL-3.0-or-later
