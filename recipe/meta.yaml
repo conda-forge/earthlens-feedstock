@@ -1,14 +1,13 @@
 {% set python_min = "3.11" %}
-{% set name = "earthlens" %}
-{% set version = "0.10.0" %}
+{% set version = "0.11.0" %}
 
 package:
-  name: {{ name|lower }}-split
+  name: earthlens-split
   version: {{ version }}
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: a3531b48f8f4033544be3315ada51af064520e16e882690d24859ca5d95da2cb
+  sha256: 8d4e9c609298a008418211391afa0161472c29c482a99369e0c34f9c6cb7c0bb
 
 build:
   number: 0
@@ -23,11 +22,19 @@ requirements:
   run:
     - python >={{ python_min }}
 
+# earthlens 0.11.0 is a uv workspace of seven lockstep distributions built from
+# one monorepo. This recipe mirrors that layout: one output per distribution,
+# each pip-installed from its own `libs/…` subdirectory, with exact
+# `pin_subpackage` between them (the workspace's `== {{ version }}` inter-package
+# pins). Per-backend SDKs are pip "extras" with no direct conda analogue; each
+# provider output carries them as `run_constrained` hints, and the batteries-
+# included `earthlens-all` output pulls every SDK that is packaged on conda-forge.
 outputs:
-  - name: earthlens
+  # ------------------------------------------------------------------ core ----
+  - name: earthlens-core
     build:
       noarch: python
-      script: $PREFIX/bin/python -m pip install . -vv --no-deps --no-build-isolation
+      script: cd libs/core && $PYTHON -m pip install . -vv --no-deps --no-build-isolation
     requirements:
       host:
         - python {{ python_min }}
@@ -36,11 +43,11 @@ outputs:
         - wheel
       run:
         - python >={{ python_min }}
-        - pyramids >=0.41.0
-        # GDAL + its format drivers are bundled inside the pyramids PyPI wheel
-        # (osgeo vendored in pyramids/_vendor), so they are absent from
-        # earthlens' pyproject.toml. The conda-forge `pyramids` package does NOT
-        # vendor GDAL, so earthlens must pull the GDAL stack explicitly here.
+        - pyramids >=0.46.0
+        # GDAL + its format drivers are vendored inside the pyramids PyPI wheel
+        # (osgeo in pyramids/_vendor), so they are absent from earthlens'
+        # pyproject.toml. The conda-forge `pyramids` package does NOT vendor
+        # GDAL, so core pulls the GDAL stack explicitly (mirrors pyramids' pins).
         - gdal >=3.10.0,<4
         - libgdal-netcdf >=3.10.0,<4
         - libgdal-hdf4 >=3.10.0,<4
@@ -58,191 +65,295 @@ outputs:
         - requests >=2.28.1
         - shapely >=2.0.0
         - tqdm >=4.66.0
-        # typer + rich are core: the `earthlens` console script (project.scripts)
-        # imports earthlens.cli at module load, so pyproject.toml lists them in
-        # the core dependencies (not behind an extra).
         - typer >=0.12
         - rich >=13
       run_constrained:
-        - boto3 >=1.43.0
-        - cdsapi >=0.7.7
-        - earthengine-api >=1.7.26
-        - rtree >=1.0.0
-    test:
-      requires:
-        - python {{ python_min }}
-      imports:
-        - earthlens
-        - earthlens.aggregate
-        - earthlens.base
-        - earthlens.chc
-      commands:
-        # the earthlens CLI shipped in 0.8.0; verifies typer/rich resolve too
-        - earthlens --help
-
-  - name: earthlens-s3
-    build:
-      noarch: python
-    requirements:
-      host:
-        - python {{ python_min }}
-      run:
-        - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
+        # core's own [s3] extra — the shared unsigned-S3 transport used by the
+        # s3 / dem / goes / radar / nwm backends (earthlens.base.s3).
         - boto3 >=1.43.0
         - botocore >=1.34.0
     test:
       requires:
         - python {{ python_min }}
       imports:
-        - earthlens.s3
+        - earthlens.core
+        - earthlens.base
+      commands:
+        # the console script lives in core (earthlens.cli:main)
+        - earthlens --help
 
-  - name: earthlens-ecmwf
+  # ------------------------------------------------------------ atmosphere ----
+  - name: earthlens-atmosphere
     build:
       noarch: python
+      script: cd libs/providers/atmosphere && $PYTHON -m pip install . -vv --no-deps --no-build-isolation
     requirements:
       host:
         - python {{ python_min }}
+        - pip
+        - setuptools >=80
+        - wheel
       run:
         - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
+        - {{ pin_subpackage('earthlens-core', exact=True) }}
+      run_constrained:
+        # per-backend SDKs (pip extras) that are on conda-forge:
+        # ecmwf / ecmwf-modern / nwp / tropycal. (eea_aq needs airbase, absent.)
         - cdsapi >=0.7.7
+        - ecmwf-datastores-client >=0.5.1
+        - herbie-data >=2026.3
+        - ecmwf-opendata >=0.3
+        - tropycal >=1.4
+        - cartopy >=0.22
     test:
       requires:
         - python {{ python_min }}
       imports:
-        - earthlens.ecmwf
+        - earthlens._atmosphere
+        - earthlens.chc
 
-  - name: earthlens-gee
+  # ----------------------------------------------------------------- ocean ----
+  - name: earthlens-ocean
     build:
       noarch: python
+      script: cd libs/providers/ocean && $PYTHON -m pip install . -vv --no-deps --no-build-isolation
     requirements:
       host:
         - python {{ python_min }}
+        - pip
+        - setuptools >=80
+        - wheel
       run:
         - python >={{ python_min }}
-        - {{ pin_subpackage('earthlens', exact=True) }}
+        - {{ pin_subpackage('earthlens-core', exact=True) }}
+      run_constrained:
+        # cmems / erddap / usgs-water / obis / nwm (nwm adds pyarrow via
+        # pyramids[parquet]). argo (argopy) is available but conflicts with
+        # openeo's xarray pin, so it is a hint only, never bundled in -all.
+        - copernicusmarine >=2.0.0,<3
+        - erddapy >=3.0
+        - dataretrieval >=1.1.4
+        - pyobis >=1.6.1
+        - pyarrow >=10.0.0
+        - argopy >=1.4
+    test:
+      requires:
+        - python {{ python_min }}
+      imports:
+        - earthlens._ocean
+
+  # --------------------------------------------------------------- imagery ----
+  - name: earthlens-imagery
+    build:
+      noarch: python
+      script: cd libs/providers/imagery && $PYTHON -m pip install . -vv --no-deps --no-build-isolation
+    requirements:
+      host:
+        - python {{ python_min }}
+        - pip
+        - setuptools >=80
+        - wheel
+      run:
+        - python >={{ python_min }}
+        - {{ pin_subpackage('earthlens-core', exact=True) }}
+      run_constrained:
+        # gee / eumetsat / openeo / sentinel-hub. (earthdata & asf need
+        # python >=3.12 / unpackaged asf_search; jaxa & stac SDKs are absent.)
         - earthengine-api >=1.7.26
         - google-api-python-client >=2.0
         - google-cloud-storage >=2.0
         - rtree >=1.0.0
         - urllib3 >=1.26
+        - eumdac >=3.1
+        - openeo >=0.47,<0.52
+        - sentinelhub >=3.11.5
     test:
       requires:
         - python {{ python_min }}
       imports:
-        - earthlens.gee
+        - earthlens._imagery
 
+  # ------------------------------------------------------------------ land ----
+  - name: earthlens-land
+    build:
+      noarch: python
+      script: cd libs/providers/land && $PYTHON -m pip install . -vv --no-deps --no-build-isolation
+    requirements:
+      host:
+        - python {{ python_min }}
+        - pip
+        - setuptools >=80
+        - wheel
+      run:
+        - python >={{ python_min }}
+        - {{ pin_subpackage('earthlens-core', exact=True) }}
+      run_constrained:
+        # gbif. (dem reuses core's boto3; ghsl needs no SDK; worldpop needs
+        # worldpoppy, which is not on conda-forge.)
+        - pygbif >=0.6.6
+    test:
+      requires:
+        - python {{ python_min }}
+      imports:
+        - earthlens._land
+        - earthlens.ghsl
+
+  # --------------------------------------------------------------- hazards ----
+  - name: earthlens-hazards
+    build:
+      noarch: python
+      script: cd libs/providers/hazards && $PYTHON -m pip install . -vv --no-deps --no-build-isolation
+    requirements:
+      host:
+        - python {{ python_min }}
+        - pip
+        - setuptools >=80
+        - wheel
+      run:
+        - python >={{ python_min }}
+        - {{ pin_subpackage('earthlens-core', exact=True) }}
+      run_constrained:
+        # fdsn / hdx / overture. (osm needs ohsome and osm-pbf needs osmium,
+        # neither packaged on conda-forge.)
+        - obspy >=1.5.0
+        - hdx-python-api >=6,<7
+        - overturemaps >=1.0.0
+        - duckdb >=1.0.0
+    test:
+      requires:
+        - python {{ python_min }}
+      imports:
+        - earthlens._hazards
+        - earthlens.gdacs
+
+  # -------------------------------------------------- earthlens (umbrella) ----
+  # Pure metapackage: the code lives in the six distributions above; this pulls
+  # all of them at the exact same build (the workspace meta package's
+  # `earthlens-<dist> == {{ version }}` pins). No SDKs — every backend's code is
+  # present, but its optional SDK is not (matches `pip install earthlens`).
+  - name: earthlens
+    build:
+      noarch: python
+    requirements:
+      run:
+        - python >={{ python_min }}
+        - {{ pin_subpackage('earthlens-core', exact=True) }}
+        - {{ pin_subpackage('earthlens-atmosphere', exact=True) }}
+        - {{ pin_subpackage('earthlens-ocean', exact=True) }}
+        - {{ pin_subpackage('earthlens-imagery', exact=True) }}
+        - {{ pin_subpackage('earthlens-land', exact=True) }}
+        - {{ pin_subpackage('earthlens-hazards', exact=True) }}
+    test:
+      requires:
+        - python {{ python_min }}
+      imports:
+        - earthlens.core
+        - earthlens._atmosphere
+        - earthlens._ocean
+        - earthlens._imagery
+        - earthlens._land
+        - earthlens._hazards
+      commands:
+        - earthlens --help
+
+  # ---------------------------------------------- earthlens-all (batteries) ---
+  # earthlens + every backend SDK from the `[all]` extra that is packaged on
+  # conda-forge, so `conda install earthlens-all` is runnable out of the box.
   - name: earthlens-all
     build:
       noarch: python
     requirements:
-      host:
-        - python {{ python_min }}
       run:
         - python >={{ python_min }}
         - {{ pin_subpackage('earthlens', exact=True) }}
-        - {{ pin_subpackage('earthlens-s3', exact=True) }}
-        - {{ pin_subpackage('earthlens-ecmwf', exact=True) }}
-        - {{ pin_subpackage('earthlens-gee', exact=True) }}
-        # Remaining optional backends from the pyproject.toml `[all]` extra. Each
-        # group mirrors one optional-dependency set. `radar`/`dem`/`goes` share
-        # the s3 SDK (boto3/botocore), already via earthlens-s3 above, and the
-        # `cmip6`/`ghsl`/`firms`/`gdacs`/`openaq` backends need no extra SDK
-        # (HTTPS/GDAL + core deps), so the base earthlens package already covers them.
-        # cmems
-        - copernicusmarine >=2.0.0,<3
-        # fdsn
-        - obspy >=1.5.0
-        # hdx
-        - hdx-python-api >=6,<7
-        # eumetsat
-        - eumdac >=3.1
-        # nwp
+        # core [s3] transport (s3 / dem / goes / radar / nwm)
+        - boto3 >=1.43.0
+        - botocore >=1.34.0
+        # atmosphere
+        - cdsapi >=0.7.7
+        - ecmwf-datastores-client >=0.5.1
         - herbie-data >=2026.3
         - ecmwf-opendata >=0.3
-        # sentinel-hub
-        - sentinelhub >=3.11.5
-        # tropycal (cartopy is required: tropycal.tracks imports cartopy)
         - tropycal >=1.4
         - cartopy >=0.22
-        # overture
+        # ocean
+        - copernicusmarine >=2.0.0,<3
+        - erddapy >=3.0
+        - dataretrieval >=1.1.4
+        - pyobis >=1.6.1
+        - pyarrow >=10.0.0
+        # imagery
+        - earthengine-api >=1.7.26
+        - google-api-python-client >=2.0
+        - google-cloud-storage >=2.0
+        - rtree >=1.0.0
+        - urllib3 >=1.26
+        - eumdac >=3.1
+        - openeo >=0.47,<0.52
+        - sentinelhub >=3.11.5
+        # land
+        - pygbif >=0.6.6
+        # hazards
+        - obspy >=1.5.0
+        - hdx-python-api >=6,<7
         - overturemaps >=1.0.0
         - duckdb >=1.0.0
-        # usgs-water
-        - dataretrieval >=1.1.4
-        # ecmwf-modern (modern CDS datastores transport)
-        - ecmwf-datastores-client >=0.5.1
-        # gbif
-        - pygbif >=0.6.6
-        # obis
-        - pyobis >=1.6.1
-        # erddap
-        - erddapy >=3.0
-        # nwm (NOAA National Water Model): earthlens[s3] (boto3/botocore already
-        # via earthlens-s3 above) + pyramids[parquet] (pyarrow) for to_parquet.
-        - pyarrow >=10.0.0
         #
-        # Backends from `[all]` deliberately NOT bundled here because they cannot
-        # be satisfied on conda-forge today:
-        #   * earthdata — earthaccess requires python >=3.12, which would raise
-        #                 this noarch bundle's floor above python_min (3.11).
-        #   * openeo    — pyproject pins openeo >=0.47,<0.48; conda-forge jumps
-        #                 from 0.46 to 0.49 (no 0.47.x), so the range is unsolvable.
-        #   * stac      — requires stac-asset, not yet on conda-forge.
-        #   * worldpop  — worldpoppy is not on conda-forge.
-        #   * asf       — asf_search is packaged, but the backend also pulls
-        #                 earthlens[earthdata] (earthaccess, python >=3.12).
-        #   * eea_aq    — airbase is not on conda-forge.
-        #   * jaxa      — jaxa.earth and gportal are not on conda-forge.
+        # `[all]` backends deliberately NOT bundled — SDK unavailable on
+        # conda-forge or an incompatible python floor:
+        #   * earthdata / asf — earthaccess requires python >=3.12 (would raise
+        #                       this noarch bundle's floor above 3.11); asf also
+        #                       needs the unpackaged asf_search.
+        #   * eea_aq          — airbase is not on conda-forge.
+        #   * jaxa            — jaxa.earth / gportal are not on conda-forge.
+        #   * stac            — stac-asset is not on conda-forge.
+        #   * worldpop        — worldpoppy is not on conda-forge.
+        #   * osm             — ohsome is not on conda-forge.
+        # (argo and osm-pbf are not part of the upstream `[all]` extra: argopy's
+        #  xarray pin conflicts with openeo's, and pyrosm needs the unpackaged
+        #  osmium.)
     test:
       requires:
         - python {{ python_min }}
       imports:
-        - earthlens
-        - earthlens.s3
+        - earthlens.core
+        - earthlens._atmosphere
+        - earthlens._ocean
+        - earthlens._imagery
+        - earthlens._land
+        - earthlens._hazards
+        # a backend from each theme, exercised with its SDK present
         - earthlens.ecmwf
-        - earthlens.gee
         - earthlens.cmems
-        - earthlens.fdsn
-        - earthlens.hdx
-        - earthlens.eumetsat
-        - earthlens.nwp
-        - earthlens.radar
-        - earthlens.sentinel_hub
-        - earthlens.tropycal
-        - earthlens.overture
-        - earthlens.usgs_water
-        - earthlens.nwm
-        - earthlens.cmip6
-        - earthlens.dem
-        - earthlens.goes
+        - earthlens.gee
         - earthlens.gbif
-        - earthlens.obis
-        - earthlens.erddap
+        - earthlens.fdsn
+        - earthlens.nwp
+
 about:
   home: https://github.com/serapeum-org/earthlens
-  license: GPL-3.0-or-later
+  license: GPL-3.0-only
   license_family: GPL
   license_file: LICENSE.md
   summary: Remote sensing package for downloading satellite and climate data
   description: |
-    earthlens is a Python package for downloading satellite and climate
-    data from multiple sources, including the Climate Hazards Center
-    (CHIRPS / CHIRP / CHIRTS / WBGT / SPI / SPEI / CHC_CMIP6, via FTP),
-    ERA5 on AWS S3, the ECMWF Climate Data Store via cdsapi, and Google
-    Earth Engine. It provides a unified `EarthLens` facade that lazily
-    loads each backend so the optional SDK for a backend you don't use
-    never has to be installed.
+    earthlens is a Python package for downloading satellite and climate data
+    from many providers behind one `EarthLens` facade that lazily loads each
+    backend, so a backend's optional SDK is only needed when you use it.
 
-    The core `earthlens` package ships only the CHC (FTP) backend's
-    requirements. The optional backends are packaged as separate
-    metapackages that depend on `earthlens` plus the relevant SDK:
+    As of 0.11.0 earthlens is a namespace package split across six installable
+    distributions plus an umbrella metapackage:
 
-      * `earthlens-s3` — boto3 (ERA5-on-S3 backend)
-      * `earthlens-ecmwf` — cdsapi (ECMWF/CDS backend)
-      * `earthlens-gee` — earthengine-api + rtree (Google Earth Engine)
-      * `earthlens-all` — pulls in every optional backend
+      * `earthlens-core` — the facade, CLI, abstractions and shared transports
+        (no provider SDKs).
+      * `earthlens-atmosphere` — weather, climate, air-quality, solar/wind.
+      * `earthlens-ocean` — ocean, hydrology and marine backends.
+      * `earthlens-imagery` — optical/SAR imagery and EO archives.
+      * `earthlens-land` — land, population and terrain backends.
+      * `earthlens-hazards` — hazards, humanitarian and infrastructure backends.
+      * `earthlens` — umbrella metapackage pulling core + all five providers.
+      * `earthlens-all` — `earthlens` plus every backend SDK packaged on
+        conda-forge.
   dev_url: https://github.com/serapeum-org/earthlens
   doc_url: https://serapeum-org.github.io/earthlens/
   doc_source_url: https://github.com/serapeum-org/earthlens/main/README.md
