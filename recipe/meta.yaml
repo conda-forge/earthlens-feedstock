@@ -1,5 +1,5 @@
 {% set python_min = "3.11" %}
-{% set version = "0.12.0" %}
+{% set version = "0.13.0" %}
 
 package:
   name: earthlens-split
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 7fe1e16cefd418a0db8e1eb9e0c9b0d527f1a7980207d7b329485f13a1e4ec3c
+  sha256: 5c406f36ced72fc8585ca0a84552148dfb5fdc22f0d34412a86471293f750640
 
 build:
   number: 0
@@ -126,6 +126,9 @@ outputs:
       run:
         - python >={{ python_min }}
         - {{ pin_subpackage('earthlens-core', exact=True) }}
+        # platformdirs: imported directly by earthlens.caravan (declared a hard
+        # dep of earthlens-ocean, not relied on transitively through core).
+        - platformdirs >=3.0.0
       run_constrained:
         # cmems / erddap / usgs-water / obis / nwm (nwm adds pyarrow via
         # pyramids[parquet]). argo (argopy) is available but conflicts with
@@ -141,6 +144,7 @@ outputs:
         - python {{ python_min }}
       imports:
         - earthlens._ocean
+        - earthlens.caravan
 
   # --------------------------------------------------------------- imagery ----
   - name: earthlens-imagery
@@ -212,19 +216,24 @@ outputs:
       run:
         - python >={{ python_min }}
         - {{ pin_subpackage('earthlens-core', exact=True) }}
+        # openpyxl is a hard dep of earthlens-hazards: the anonymous EM-DAT
+        # (emdat) route reads .xlsx via pandas.read_excel.
+        - openpyxl >=3.1
       run_constrained:
-        # fdsn / hdx / overture. (osm needs ohsome and osm-pbf needs osmium,
-        # neither packaged on conda-forge.)
+        # fdsn / hdx / overture / emdat. (osm needs ohsome, osm-pbf needs
+        # osmium; emdat GDIS needs earthaccess (python >=3.12) - hint only.)
         - obspy >=1.5.0
         - hdx-python-api >=6,<7
         - overturemaps >=1.0.0
         - duckdb >=1.0.0
+        - earthaccess >=0.17.0
     test:
       requires:
         - python {{ python_min }}
       imports:
         - earthlens._hazards
         - earthlens.gdacs
+        - earthlens.emdat
 
   # -------------------------------------------------- earthlens (umbrella) ----
   # Pure metapackage: the code lives in the six distributions above; this pulls
@@ -309,6 +318,7 @@ outputs:
         #   * stac            — stac-asset is not on conda-forge.
         #   * worldpop        — worldpoppy is not on conda-forge.
         #   * osm             — ohsome is not on conda-forge.
+        #   * emdat           — earthaccess (its GDIS half, python >=3.12) is not bundled.
         # (argo and osm-pbf are not part of the upstream `[all]` extra: argopy's
         #  xarray pin conflicts with openeo's, and pyrosm needs the unpackaged
         #  osmium.)
