@@ -1,5 +1,5 @@
 {% set python_min = "3.11" %}
-{% set version = "0.13.0" %}
+{% set version = "0.14.0" %}
 
 package:
   name: earthlens-split
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 5c406f36ced72fc8585ca0a84552148dfb5fdc22f0d34412a86471293f750640
+  sha256: fa40cd603517b5ad039a17b8495aee812befd74696febfb241342968e1a3798d
 
 build:
   number: 0
@@ -98,19 +98,23 @@ outputs:
         - {{ pin_subpackage('earthlens-core', exact=True) }}
       run_constrained:
         # per-backend SDKs (pip extras) that are on conda-forge:
-        # ecmwf / ecmwf-modern / nwp / tropycal. (eea_aq needs airbase, absent.)
+        # ecmwf / ecmwf-modern / nwp / tropycal / mswep. (eea_aq needs airbase, absent.)
         - cdsapi >=0.7.7
         - ecmwf-datastores-client >=0.5.1
         - herbie-data >=2026.3
         - ecmwf-opendata >=0.3
         - tropycal >=1.4
         - cartopy >=0.22
+        # mswep (GloH2O MSWEP/MSWX via Google Drive)
+        - google-api-python-client >=2.0
+        - google-auth >=2.0
     test:
       requires:
         - python {{ python_min }}
       imports:
         - earthlens._atmosphere
         - earthlens.chc
+        - earthlens.mswep
 
   # ----------------------------------------------------------------- ocean ----
   - name: earthlens-ocean
@@ -285,6 +289,9 @@ outputs:
         - ecmwf-opendata >=0.3
         - tropycal >=1.4
         - cartopy >=0.22
+        # mswep needs google-auth (google-api-python-client is already listed
+        # under imagery below)
+        - google-auth >=2.0
         # ocean
         - copernicusmarine >=2.0.0,<3
         - erddapy >=3.0
