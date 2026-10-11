@@ -1,5 +1,5 @@
 {% set python_min = "3.11" %}
-{% set version = "0.15.0" %}
+{% set version = "0.16.0" %}
 
 package:
   name: earthlens-split
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: ccafc9316ba6916f4210c7c13bb13fa34b83ac68a97d9e284aec0195cff2eaf5
+  sha256: 8bc6b6d4c634d2989367b69df5aa5b9c65de1003dd40e777d23d53082ee45ef0
 
 build:
   number: 0
@@ -66,6 +66,7 @@ outputs:
         - shapely >=2.0.0
         - tqdm >=4.66.0
         - typer >=0.12
+        - urllib3 >=1.26
         - rich >=13
       run_constrained:
         # core's own [s3] extra — the shared unsigned-S3 transport used by the
@@ -130,9 +131,6 @@ outputs:
       run:
         - python >={{ python_min }}
         - {{ pin_subpackage('earthlens-core', exact=True) }}
-        # platformdirs: imported directly by earthlens.caravan (declared a hard
-        # dep of earthlens-ocean, not relied on transitively through core).
-        - platformdirs >=3.0.0
       run_constrained:
         # cmems / erddap / usgs-water / obis / nwm (nwm adds pyarrow via
         # pyramids[parquet]). argo (argopy) is available but conflicts with
