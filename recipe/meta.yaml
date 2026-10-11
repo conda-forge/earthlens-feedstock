@@ -1,5 +1,6 @@
 {% set python_min = "3.11" %}
-{% set version = "0.16.0" %}
+{% set version = "0.17.0" %}
+
 
 package:
   name: earthlens-split
@@ -7,7 +8,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 8bc6b6d4c634d2989367b69df5aa5b9c65de1003dd40e777d23d53082ee45ef0
+  sha256: 61852f09f115c479bc5b530e89d074151d8c27b7d6f3e6fa47d69b5704a06ccc
 
 build:
   number: 0
@@ -43,7 +44,7 @@ outputs:
         - wheel
       run:
         - python >={{ python_min }}
-        - pyramids >=0.53.0
+        - pyramids >=0.54.0
         # GDAL + its format drivers are vendored inside the pyramids PyPI wheel
         # (osgeo in pyramids/_vendor), so they are absent from earthlens'
         # pyproject.toml. The conda-forge `pyramids` package does NOT vendor
