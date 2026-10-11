@@ -1,5 +1,5 @@
 {% set python_min = "3.11" %}
-{% set version = "0.17.0" %}
+{% set version = "0.18.0" %}
 
 
 package:
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://github.com/serapeum-org/earthlens/archive/{{ version }}.tar.gz
-  sha256: 61852f09f115c479bc5b530e89d074151d8c27b7d6f3e6fa47d69b5704a06ccc
+  sha256: b41a4aee578df503b298f621895a79c8468adc7837aa1cc3106496c6fd4fb936
 
 build:
   number: 0
@@ -174,6 +174,9 @@ outputs:
         - eumdac >=3.1
         - openeo >=0.47,<0.52
         - sentinelhub >=3.11.5
+        # eedai (pyramids-eo GEE reader) — held out of upstream [all] because it
+        # flips the gee engine default, so it is a hint here, not in earthlens-all.
+        - pyramids-eo >=0.2.0,<0.3
     test:
       requires:
         - python {{ python_min }}
