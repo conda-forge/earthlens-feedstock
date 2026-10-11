@@ -1,6 +1,7 @@
 {% set python_min = "3.11" %}
 {% set version = "0.27.1" %}
 
+
 package:
   name: earthlens-split
   version: {{ version }}
@@ -43,7 +44,7 @@ outputs:
         - wheel
       run:
         - python >={{ python_min }}
-        - pyramids >=0.53.0
+        - pyramids >=0.54.0
         # GDAL + its format drivers are vendored inside the pyramids PyPI wheel
         # (osgeo in pyramids/_vendor), so they are absent from earthlens'
         # pyproject.toml. The conda-forge `pyramids` package does NOT vendor
@@ -66,6 +67,7 @@ outputs:
         - shapely >=2.0.0
         - tqdm >=4.66.0
         - typer >=0.12
+        - urllib3 >=1.26
         - rich >=13
       run_constrained:
         # core's own [s3] extra — the shared unsigned-S3 transport used by the
@@ -130,9 +132,6 @@ outputs:
       run:
         - python >={{ python_min }}
         - {{ pin_subpackage('earthlens-core', exact=True) }}
-        # platformdirs: imported directly by earthlens.caravan (declared a hard
-        # dep of earthlens-ocean, not relied on transitively through core).
-        - platformdirs >=3.0.0
       run_constrained:
         # cmems / erddap / usgs-water / obis / nwm (nwm adds pyarrow via
         # pyramids[parquet]). argo (argopy) is available but conflicts with
@@ -175,6 +174,9 @@ outputs:
         - eumdac >=3.1
         - openeo >=0.47,<0.52
         - sentinelhub >=3.11.5
+        # eedai (pyramids-eo GEE reader) — held out of upstream [all] because it
+        # flips the gee engine default, so it is a hint here, not in earthlens-all.
+        - pyramids-eo >=0.2.0,<0.3
     test:
       requires:
         - python {{ python_min }}
