@@ -5,7 +5,7 @@ Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/earthlens-feeds
 
 Home: https://github.com/serapeum-org/earthlens
 
-Package license: GPL-3.0-or-later
+Package license: GPL-3.0-only
 
 Summary: Remote sensing package for downloading satellite and climate data
 
@@ -13,22 +13,23 @@ Development: https://github.com/serapeum-org/earthlens
 
 Documentation: https://serapeum-org.github.io/earthlens/
 
-earthlens is a Python package for downloading satellite and climate
-data from multiple sources, including the Climate Hazards Center
-(CHIRPS / CHIRP / CHIRTS / WBGT / SPI / SPEI / CHC_CMIP6, via FTP),
-ERA5 on AWS S3, the ECMWF Climate Data Store via cdsapi, and Google
-Earth Engine. It provides a unified `EarthLens` facade that lazily
-loads each backend so the optional SDK for a backend you don't use
-never has to be installed.
+earthlens is a Python package for downloading satellite and climate data
+from many providers behind one `EarthLens` facade that lazily loads each
+backend, so a backend's optional SDK is only needed when you use it.
 
-The core `earthlens` package ships only the CHC (FTP) backend's
-requirements. The optional backends are packaged as separate
-metapackages that depend on `earthlens` plus the relevant SDK:
+As of 0.11.0 earthlens is a namespace package split across six installable
+distributions plus an umbrella metapackage:
 
-  * `earthlens-s3` — boto3 (ERA5-on-S3 backend)
-  * `earthlens-ecmwf` — cdsapi (ECMWF/CDS backend)
-  * `earthlens-gee` — earthengine-api + rtree (Google Earth Engine)
-  * `earthlens-all` — pulls in every optional backend
+  * `earthlens-core` — the facade, CLI, abstractions and shared transports
+    (no provider SDKs).
+  * `earthlens-atmosphere` — weather, climate, air-quality, solar/wind.
+  * `earthlens-ocean` — ocean, hydrology and marine backends.
+  * `earthlens-imagery` — optical/SAR imagery and EO archives.
+  * `earthlens-land` — land, population and terrain backends.
+  * `earthlens-hazards` — hazards, humanitarian and infrastructure backends.
+  * `earthlens` — umbrella metapackage pulling core + all five providers.
+  * `earthlens-all` — `earthlens` plus every backend SDK packaged on
+    conda-forge.
 
 
 Current build status
@@ -52,9 +53,12 @@ Current release info
 | --- | --- | --- | --- |
 | [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens-green.svg)](https://anaconda.org/conda-forge/earthlens) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens.svg)](https://anaconda.org/conda-forge/earthlens) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens.svg)](https://anaconda.org/conda-forge/earthlens) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens.svg)](https://anaconda.org/conda-forge/earthlens) |
 | [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--all-green.svg)](https://anaconda.org/conda-forge/earthlens-all) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-all.svg)](https://anaconda.org/conda-forge/earthlens-all) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-all.svg)](https://anaconda.org/conda-forge/earthlens-all) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-all.svg)](https://anaconda.org/conda-forge/earthlens-all) |
-| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--ecmwf-green.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-ecmwf.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-ecmwf.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-ecmwf.svg)](https://anaconda.org/conda-forge/earthlens-ecmwf) |
-| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--gee-green.svg)](https://anaconda.org/conda-forge/earthlens-gee) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-gee.svg)](https://anaconda.org/conda-forge/earthlens-gee) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-gee.svg)](https://anaconda.org/conda-forge/earthlens-gee) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-gee.svg)](https://anaconda.org/conda-forge/earthlens-gee) |
-| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--s3-green.svg)](https://anaconda.org/conda-forge/earthlens-s3) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-s3.svg)](https://anaconda.org/conda-forge/earthlens-s3) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-s3.svg)](https://anaconda.org/conda-forge/earthlens-s3) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-s3.svg)](https://anaconda.org/conda-forge/earthlens-s3) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--atmosphere-green.svg)](https://anaconda.org/conda-forge/earthlens-atmosphere) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-atmosphere.svg)](https://anaconda.org/conda-forge/earthlens-atmosphere) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-atmosphere.svg)](https://anaconda.org/conda-forge/earthlens-atmosphere) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-atmosphere.svg)](https://anaconda.org/conda-forge/earthlens-atmosphere) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--core-green.svg)](https://anaconda.org/conda-forge/earthlens-core) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-core.svg)](https://anaconda.org/conda-forge/earthlens-core) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-core.svg)](https://anaconda.org/conda-forge/earthlens-core) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-core.svg)](https://anaconda.org/conda-forge/earthlens-core) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--hazards-green.svg)](https://anaconda.org/conda-forge/earthlens-hazards) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-hazards.svg)](https://anaconda.org/conda-forge/earthlens-hazards) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-hazards.svg)](https://anaconda.org/conda-forge/earthlens-hazards) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-hazards.svg)](https://anaconda.org/conda-forge/earthlens-hazards) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--imagery-green.svg)](https://anaconda.org/conda-forge/earthlens-imagery) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-imagery.svg)](https://anaconda.org/conda-forge/earthlens-imagery) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-imagery.svg)](https://anaconda.org/conda-forge/earthlens-imagery) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-imagery.svg)](https://anaconda.org/conda-forge/earthlens-imagery) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--land-green.svg)](https://anaconda.org/conda-forge/earthlens-land) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-land.svg)](https://anaconda.org/conda-forge/earthlens-land) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-land.svg)](https://anaconda.org/conda-forge/earthlens-land) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-land.svg)](https://anaconda.org/conda-forge/earthlens-land) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-earthlens--ocean-green.svg)](https://anaconda.org/conda-forge/earthlens-ocean) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/earthlens-ocean.svg)](https://anaconda.org/conda-forge/earthlens-ocean) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/earthlens-ocean.svg)](https://anaconda.org/conda-forge/earthlens-ocean) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/earthlens-ocean.svg)](https://anaconda.org/conda-forge/earthlens-ocean) |
 
 Installing earthlens-split
 ==========================
@@ -66,31 +70,73 @@ conda config --add channels conda-forge
 conda config --set channel_priority strict
 ```
 
-Once the `conda-forge` channel has been enabled, `earthlens, earthlens-all, earthlens-ecmwf, earthlens-gee, earthlens-s3` can be installed with `conda`:
+How to use
+----------
+
+<details>
+<summary>With conda</summary>
 
 ```
-conda install earthlens earthlens-all earthlens-ecmwf earthlens-gee earthlens-s3
+conda install earthlens earthlens-all earthlens-atmosphere earthlens-core earthlens-hazards earthlens-imagery earthlens-land earthlens-ocean
 ```
 
-or with `mamba`:
+</details>
+
+<details>
+<summary>With mamba</summary>
 
 ```
-mamba install earthlens earthlens-all earthlens-ecmwf earthlens-gee earthlens-s3
+mamba install earthlens earthlens-all earthlens-atmosphere earthlens-core earthlens-hazards earthlens-imagery earthlens-land earthlens-ocean
 ```
 
-It is possible to list all of the versions of `earthlens` available on your platform with `conda`:
+</details>
+
+<details>
+<summary>With pixi</summary>
+
+```
+# for adding to your local project
+pixi add earthlens earthlens-all earthlens-atmosphere earthlens-core earthlens-hazards earthlens-imagery earthlens-land earthlens-ocean
+# for installing globally
+pixi global install earthlens earthlens-all earthlens-atmosphere earthlens-core earthlens-hazards earthlens-imagery earthlens-land earthlens-ocean
+```
+
+</details>
+
+Search package versions
+-----------------------
+
+It is possible to list all of the versions of `earthlens` available on your platform:
+
+<details>
+<summary>With conda</summary>
 
 ```
 conda search earthlens --channel conda-forge
 ```
 
-or with `mamba`:
+</details>
+
+<details>
+<summary>With mamba</summary>
 
 ```
 mamba search earthlens --channel conda-forge
 ```
 
-Alternatively, `mamba repoquery` may provide more information:
+</details>
+
+<details>
+<summary>With pixi</summary>
+
+```
+pixi search earthlens --channel conda-forge
+```
+
+</details>
+
+<details>
+<summary>With mamba repoquery, which may provide more information</summary>
 
 ```
 # Search all versions available on your platform:
@@ -102,6 +148,8 @@ mamba repoquery whoneeds earthlens --channel conda-forge
 # List dependencies of `earthlens`:
 mamba repoquery depends earthlens --channel conda-forge
 ```
+
+</details>
 
 
 About conda-forge
